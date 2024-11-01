@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outbox</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: #46a49b;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 20px;
+            height: 50px;
+        }
+
+        .header-title {
+            font-size: 30px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-right span {
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .header-right a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            background-color: #2d7a6a;
+            border-radius: 5px;
+        }
+
+        .header-right a:hover {
+            background-color: #1c5a47;
+        }
+
+        /* Main layout */
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .sidebar a:hover {
+            background-color: #ddd;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .page-link {
+            text-decoration: none;
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            color: #333;
+        }
+
+        .page-link:hover {
+            background-color: #ddd;
+        }
+
+        .active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        /* Delete Button */
+        .actions {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #deleteBtn {
+            padding: 10px 20px;
+            color: white;
+            background-color: #46a49b;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #deleteBtn:hover {
+            background-color: #2d7a6a;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <h1 class="header-title">Welcome to Outbox</h1>
+        <div class="header-right">
+            <span>
+                <%= user.full_name %>
+            </span>
+            <a href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <div class="content">
+        <div class="sidebar">
+            <a href="/inbox">Inbox</a>
+            <a href="/outbox">Outbox</a>
+            <a href="/compose">Compose</a>
+        </div>
+
+        <div class="main-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Receiver</th>
+                        <th>Subject</th>
+                        <th>Content</th>
+                        <th>Time Sent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% emails.forEach(function(email) { %>
+                        <tr id="email-<%= email.id %>">
+                            <td><input type="checkbox" name="selectedEmails" value="<%= email.id %>"></td>
+                            <td>
+                                <%= email.receiver %>
+                            </td>
+                            <td>
+                                <a href="/detail/<%= email.id %>">
+                                    <%= email.subject || '(no subject)' %>
+                                </a>
+                            </td>
+                            <td>
+                                <%= email.body %>
+                            </td>
+                            <td>
+                                <%= email.timestamp %>
+                            </td>
+
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <% if (currentPage> 1) { %>
+                    <a href="/outbox?page=<%= currentPage - 1 %>" class="page-link">Previous</a>
+                    <% } %>
+
+                        <% for (let i=1; i <=totalPages; i++) { %>
+                            <a href="/outbox?page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+
+                                <% if (currentPage < totalPages) { %>
+                                    <a href="/outbox?page=<%= currentPage + 1 %>" class="page-link">Next</a>
+                                    <% } %>
+            </div>
+
+            <div class="actions">
+                <button id="deleteBtn">Delete Selected Emails</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const deleteBtn = document.getElementById('deleteBtn');
+
+            deleteBtn.addEventListener('click', () => {
+                const selectedEmailIds = Array.from(document.querySelectorAll('input[name="selectedEmails"]:checked'))
+                    .map(checkbox => checkbox.value);
+
+                selectedEmailIds.forEach(emailId => {
+                    fetch(`/api/emails/outbox/${emailId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                const emailRow = document.getElementById(`email-${emailId}`);
+                                if (emailRow) {
+                                    emailRow.remove();
+                                }
+                            } else {
+                                console.error('Error deleting email:', response.statusText);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error deleting email:', error.message);
+                        });
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

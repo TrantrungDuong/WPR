@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: #46a49b;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 20px;
+            height: 50px;
+        }
+
+        .header-title {
+            font-size: 30px;
+            color: white;
+
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-right span {
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .header-right a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            background-color: #2d7a6a;
+            border-radius: 5px;
+        }
+
+        .header-right a:hover {
+            background-color: #1c5a47;
+        }
+
+        /* Main layout */
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .sidebar a:hover {
+            background-color: #ddd;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .box {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        select,
+        input,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #2d7a6a;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #72c6b5;
+        }
+
+        #messageContainer {
+            margin-top: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .success-message {
+            color: green;
+        }
+
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <h1 class="header-title">Compose Email</h1>
+        <div class="header-right">
+            <span>
+                <%= user.full_name %>
+            </span>
+            <a href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main layout -->
+    <div class="content">
+        <!-- Sidebar positioned on the left -->
+        <div class="sidebar">
+            <a href="/inbox">Inbox</a>
+            <a href="/outbox">Outbox</a>
+            <a href="/compose">Compose</a>
+        </div>
+
+        <!-- Main content area -->
+        <div class="main-content">
+            <div class="box">
+                <h1>Compose Email</h1>
+                <form action="/compose" method="POST" enctype="multipart/form-data">
+                    <label for="recipient">Recipient:</label>
+                    <select id="recipientDropdown" name="recipient" required>
+                        <option value="">Select a recipient</option>
+                        <% users.forEach(user=> { %>
+                            <option value="<%= user.id %>">
+                                <%= user.username %>
+                            </option>
+                            <% }); %>
+                    </select>
+
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject" placeholder="(no subject)">
+
+                    <label for="body">Body:</label>
+                    <textarea id="body" name="content" placeholder="Write your email here..."></textarea>
+
+                    <!-- File input for attachment -->
+                    <label for="attachment">Attachment:</label>
+                    <input type="file" id="attachment" name="attachment">
+
+                    <button type="submit">Send</button>
+                </form>
+
+                <!-- Success/Error messages -->
+                <div id="messageContainer">
+                    <% if (success) { %>
+                        <div class="success-message">
+                            <%= success %>
+                        </div>
+                        <% } %>
+                            <% if (error) { %>
+                                <div class="error-message">
+                                    <%= error %>
+                                </div>
+                                <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
